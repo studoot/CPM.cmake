@@ -109,6 +109,11 @@ set(CPM_SOURCE_CACHE
     CACHE PATH "Directory to download CPM dependencies"
 )
 
+set(CPM_GIT_REMOVE
+    FALSE
+    CACHE BOOL "Remove cloned Git repositories and keep only the checked out working tree"
+)
+
 if(NOT CPM_DONT_UPDATE_MODULE_PATH)
   set(CPM_MODULE_PATH
       "${CMAKE_BINARY_DIR}/CPM_modules"
@@ -588,6 +593,19 @@ function(CPMAddPackage)
       "${CPM_ARGS_NAME}" "${CPM_ARGS_VERSION}" "${PACKAGE_INFO}" "${CPM_ARGS_UNPARSED_ARGUMENTS}"
     )
     cpm_fetch_package("${CPM_ARGS_NAME}")
+
+    if(CPM_ARGS_GIT_REPOSITORY AND CPM_GIT_REMOVE)
+      list(FIND CPM_ARGS_UNPARSED_ARGUMENTS SOURCE_DIR SOURCE_DIR_INDEX)
+      if(NOT SOURCE_DIR_INDEX EQUAL -1)
+        math(EXPR SOURCE_DIR_INDEX "${SOURCE_DIR_INDEX}+1")
+        list(GET CPM_ARGS_UNPARSED_ARGUMENTS ${SOURCE_DIR_INDEX} GIT_SRC_DIR)
+        set(GIT_REPO_DIR "${GIT_SRC_DIR}/.git")
+        if(EXISTS ${GIT_REPO_DIR})
+          file(REMOVE_RECURSE ${GIT_REPO_DIR})
+        endif()
+      endif()
+    endif()
+
     cpm_add_subdirectory(
       "${CPM_ARGS_NAME}" "${DOWNLOAD_ONLY}"
       "${${CPM_ARGS_NAME}_SOURCE_DIR}/${CPM_ARGS_SOURCE_SUBDIR}" "${${CPM_ARGS_NAME}_BINARY_DIR}"
